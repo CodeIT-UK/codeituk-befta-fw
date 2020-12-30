@@ -22,6 +22,7 @@ import uk.gov.hmcts.befta.DefaultTestAutomationAdapter;
 import uk.gov.hmcts.befta.data.HttpTestData;
 import uk.gov.hmcts.befta.data.HttpTestDataSource;
 import uk.gov.hmcts.befta.data.JsonStoreHttpTestDataSource;
+import uk.gov.hmcts.befta.factory.DynamicValueInjectorFactory;
 import uk.gov.hmcts.befta.player.BackEndFunctionalTestScenarioContext;
 
 public class DynamicValueInjectorTest {
@@ -35,13 +36,13 @@ public class DynamicValueInjectorTest {
     @Mock
     private DefaultTestAutomationAdapter taAdapter;
 
-   private MockedStatic<EnvironmentVariableUtils> environmentVariableUtilsMock = null;
+    private MockedStatic<EnvironmentVariableUtils> environmentVariableUtilsMock = null;
 
     @BeforeEach
     public void prepareMockedObjectUnderTest() {
         try {
-        	environmentVariableUtilsMock = mockStatic(EnvironmentVariableUtils.class);
-        	prepareScenarioConext();
+            environmentVariableUtilsMock = mockStatic(EnvironmentVariableUtils.class);
+            prepareScenarioConext();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -50,8 +51,8 @@ public class DynamicValueInjectorTest {
     @AfterEach
     public void closeMockedObjectUnderTest() {
         try {
-        	scenarioContext = null;
-        	environmentVariableUtilsMock.close();
+            scenarioContext = null;
+            environmentVariableUtilsMock.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -63,7 +64,7 @@ public class DynamicValueInjectorTest {
         scenarioContext = new BackEndFunctionalTestScenarioContextForTest();
 
         scenarioContext.initializeTestDataFor("Simple-Test-Data-With-All-Possible-Dynamic-Values");
-        
+
         BackEndFunctionalTestScenarioContext subcontext = new BackEndFunctionalTestScenarioContextForTest();
         subcontext.initializeTestDataFor("Token_Creation_Call");
         subcontext.getTestData().setActualResponse(subcontext.getTestData().getExpectedResponse());
@@ -71,13 +72,13 @@ public class DynamicValueInjectorTest {
         scenarioContext.setTheInvokingUser(scenarioContext.getTestData().getInvokingUser());
         scenarioContext.addChildContext(subcontext);
     }
-    
+
     @Test
     public void shouldInjectAllFormulaValues() {
 
         HttpTestData testData = scenarioContext.getTestData();
 
-        DynamicValueInjector underTest = new DynamicValueInjector(taAdapter, testData, scenarioContext);
+        DynamicValueInjector underTest = DynamicValueInjectorFactory.create(taAdapter, testData, scenarioContext);
 
         Assert.assertEquals("[[DEFAULT_AUTO_VALUE]]", testData.getRequest().getPathVariables().get("uid"));
 
@@ -116,7 +117,7 @@ public class DynamicValueInjectorTest {
 
         HttpTestData testData = scenarioContext.getTestData();
 
-        DynamicValueInjector underTest = new DynamicValueInjector(taAdapter, testData, scenarioContext);
+        DynamicValueInjector underTest = DynamicValueInjectorFactory.create(taAdapter, testData, scenarioContext);
 
 
         // Mocking
@@ -217,7 +218,7 @@ public class DynamicValueInjectorTest {
         Mockito.when(taAdapter.calculateCustomValue(scenarioContext, "test-custom-value-key")).thenReturn(expectedResponse);
         Mockito.when(taAdapter.calculateCustomValue(scenarioContext, "test-custom-value-string")).thenReturn("INLINE");
 
-        DynamicValueInjector underTest = new DynamicValueInjector(taAdapter, testData, scenarioContext);
+        DynamicValueInjector underTest = DynamicValueInjectorFactory.create(taAdapter, testData, scenarioContext);
 
         // verify custom-value TD file looks OK prior to execution of test
         assertCustomValuesTestData(testData, "${[scenarioContext][customValues][test-custom-value-key]}");
